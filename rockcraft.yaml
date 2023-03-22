@@ -1,19 +1,18 @@
 name: grafana
 summary: Grafana in a ROCK.
 description: "The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more."
-version: "9.4.3"
+version: "9.4.7"
 base: ubuntu:22.04
 license: AGPL-3.0
 entrypoint: [/bin/grafana-server]
 cmd: [--config, /etc/grafana/grafana-config.ini]
 platforms:
   amd64:
-
 parts:
   grafana:
     plugin: go
     source: https://github.com/grafana/grafana.git
-    source-tag: v9.4.3
+    source-tag: v9.4.7
     source-depth: 1
     build-snaps:
       - go/1.19/stable
