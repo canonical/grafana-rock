@@ -4,8 +4,13 @@ description: "The open and composable observability and data visualization platf
 version: "9.4.7"
 base: ubuntu:22.04
 license: AGPL-3.0
-entrypoint: [/bin/grafana-server]
-cmd: [--config, /etc/grafana/grafana-config.ini]
+
+services:
+  grafana:
+    command: /bin/grafana-server --config /etc/grafana/grafana-config.ini
+    override: replace
+    startup: enabled
+
 platforms:
   amd64:
 parts:
@@ -19,11 +24,14 @@ parts:
     override-build: |
       set -x
       make build-go
-      find bin -type f -executable | while read f; do install -D -m 755 $f ${CRAFT_PART_INSTALL}/usr/bin/$f; done
+      find bin -type f -executable | while read f; do install -D -m 755 $f ${CRAFT_PART_INSTALL}/usr/$(echo $f | sed -e 's%linux-amd64/%%'); done
       cp -rpv conf ${CRAFT_PART_INSTALL}/conf
+      mkdir -p ${CRAFT_PART_INSTALL}/etc/grafana
+      touch ${CRAFT_PART_INSTALL}/etc/grafana/grafana-config.ini
     stage:
       - usr/bin/grafana*
       - conf/
+      - etc/grafana
   grafana-ui:
     after: [grafana]
     plugin: nil
