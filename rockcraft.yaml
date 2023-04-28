@@ -29,6 +29,7 @@ parts:
       mkdir -p ${CRAFT_PART_INSTALL}/etc/grafana
       touch ${CRAFT_PART_INSTALL}/etc/grafana/grafana-config.ini
     stage:
+      - bin/*
       - usr/bin/grafana*
       - conf/
       - etc/grafana
