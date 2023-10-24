@@ -36,7 +36,7 @@ parts:
     plugin: nil
     source-type: git
     source: https://github.com/grafana/grafana.git
-    source-tag: v9.4.3
+    source-tag: v10.0.3
     build-snaps:
       - node/18/stable
     build-environment:
@@ -56,3 +56,8 @@ parts:
     stage:
       - public/
       - tools/
+  ca_certificates:
+    plugin: nil
+    stage-packages:
+      - ca-certificates
+
