@@ -12,3 +12,11 @@ jobs:
       rock-name: grafana
       source-repo: grafana/grafana
       check-go: true
+      update-script: |
+        # The caller must provide \$application_src and \$rockcraft_yaml
+        #   \$application_src: The root folder of the cloned upstream project
+        #   \$rockcraft_yaml: Path of the rockcraft.yaml to update
+        #
+        ## grafana-ui dependency
+        source_tag=$(yq .parts.grafana.source-tag $rockcraft_yaml)
+        tag="\$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' $rockcraft_yaml
