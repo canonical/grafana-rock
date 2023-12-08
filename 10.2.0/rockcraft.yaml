@@ -2,7 +2,7 @@ name: grafana
 summary: Grafana in a ROCK.
 description: "The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more."
 version: "10.2.0"
-base: ubuntu:22.04
+base: ubuntu@22.04
 license: AGPL-3.0
 services:
   grafana:
@@ -60,3 +60,13 @@ parts:
     plugin: nil
     stage-packages:
       - ca-certificates
+  deb-security-manifest:
+    plugin: nil
+    after:
+      - grafana
+      - grafana-ui
+      - ca_certificates
+    override-prime: |
+      set -x
+      mkdir -p $CRAFT_PRIME/usr/share/rocks/
+      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query
