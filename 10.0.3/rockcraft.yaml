@@ -56,16 +56,16 @@ parts:
     stage:
       - public/
       - tools/
-  ca_certificates:
+  ca-certs:
     plugin: nil
-    stage-packages:
+    overlay-packages:
       - ca-certificates
   deb-security-manifest:
     plugin: nil
     after:
       - grafana
       - grafana-ui
-      - ca_certificates
+      - ca-certs
     override-prime: |
       set -x
       mkdir -p $CRAFT_PRIME/usr/share/rocks/
