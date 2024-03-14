@@ -1,7 +1,7 @@
 name: grafana
 summary: Grafana in a ROCK.
 description: "The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more."
-version: "10.2.3"
+version: "10.3.3"
 base: ubuntu@22.04
 license: AGPL-3.0
 services:
@@ -15,7 +15,7 @@ parts:
   grafana:
     plugin: go
     source: https://github.com/grafana/grafana.git
-    source-tag: v10.2.3
+    source-tag: v10.3.3
     source-depth: 1
     build-snaps:
       - go/1.21/stable
@@ -36,7 +36,7 @@ parts:
     plugin: nil
     source-type: git
     source: https://github.com/grafana/grafana.git
-    source-tag: v10.2.3
+    source-tag: v10.3.3
     build-snaps:
       - node/18/stable
     build-environment:
