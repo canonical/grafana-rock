@@ -1,0 +1,72 @@
+name: grafana
+summary: Grafana in a ROCK.
+description: "The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more."
+version: "11.4.0"
+base: ubuntu@22.04
+license: AGPL-3.0
+services:
+  grafana:
+    command: /bin/grafana-server --config /etc/grafana/grafana-config.ini
+    override: replace
+    startup: enabled
+platforms:
+  amd64:
+parts:
+  grafana:
+    plugin: go
+    source: https://github.com/grafana/grafana.git
+    source-tag: v11.4.0
+    source-depth: 1
+    build-snaps:
+      - go/1.23/stable
+    override-build: |
+      set -x
+      make build-go
+      find bin -type f -executable | while read f; do install -D -m 755 $f ${CRAFT_PART_INSTALL}/usr/$(echo $f | sed -e 's%linux-amd64/%%'); done
+      cp -rpv conf ${CRAFT_PART_INSTALL}/conf
+      mkdir -p ${CRAFT_PART_INSTALL}/etc/grafana
+      touch ${CRAFT_PART_INSTALL}/etc/grafana/grafana-config.ini
+    stage:
+      - bin/*
+      - usr/bin/grafana*
+      - conf/
+      - etc/grafana
+  grafana-ui:
+    after: [grafana]
+    plugin: nil
+    source-type: git
+    source: https://github.com/grafana/grafana.git
+    source-tag: v11.4.0
+    build-snaps:
+      - node/18/stable
+    build-environment:
+      - NODE_OPTIONS: "--max-old-space-size=8192"
+    override-build: |
+      # We have to limit node's max memory usage otherwise we'll run
+      # into OOM issues even with a 10GB RAM VM.
+      npm install --location=global --prefix $CRAFT_PART_BUILD yarn
+      [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
+      [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
+      yarn config
+      YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+      echo "Building frontend"
+      make build-js
+      mkdir -p ${CRAFT_PART_INSTALL}/{public,tools}
+      cp -rpv public/* ${CRAFT_PART_INSTALL}/public/
+    stage:
+      - public/
+      - tools/
+  ca-certs:
+    plugin: nil
+    overlay-packages:
+      - ca-certificates
+  deb-security-manifest:
+    plugin: nil
+    after:
+      - grafana
+      - grafana-ui
+      - ca-certs
+    override-prime: |
+      set -x
+      mkdir -p $CRAFT_PRIME/usr/share/rocks/
+      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query
