@@ -1,0 +1,15 @@
+process:
+  grafana:
+    running: true
+package:
+  ca-certificates:
+    installed: true
+http:
+  metrics:
+    status: 200
+    url: http://localhost:3000/metrics
+    timeout: 1000
+  health:
+    status: 200
+    url: http://localhost:3000/api/health
+    timeout: 1000
