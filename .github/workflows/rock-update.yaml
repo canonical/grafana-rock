@@ -3,7 +3,7 @@ name: Update rock
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 0,4,8,12,16,20 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   build:
@@ -20,3 +20,4 @@ jobs:
         ## grafana-ui dependency
         source_tag=$(yq .parts.grafana.source-tag $rockcraft_yaml)
         tag="\$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' $rockcraft_yaml
+    secrets: inherit
