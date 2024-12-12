@@ -1,6 +1,9 @@
 name: grafana
 summary: Grafana in a ROCK.
-description: "The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more."
+description: >
+  The open and composable observability and data visualization platform.
+  Visualize metrics, logs, and traces from multiple sources like Prometheus,
+  Loki, Elasticsearch, InfluxDB, Postgres and many more.
 version: "11.4.0"
 base: ubuntu@24.04
 license: AGPL-3.0
