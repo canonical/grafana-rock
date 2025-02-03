@@ -30,4 +30,14 @@ run version=latest_version: (push-to-registry version)
 
 # Test the rock with `kgoss`
 test version=latest_version: (push-to-registry version)
-  GOSS_OPTS="--retry-timeout 300s" kgoss run -i localhost:32000/${rock_name}-dev:${version}
+  retry_count=0
+  max_retries=10
+  until GOSS_OPTS="--retry-timeout 60s" kgoss run -i localhost:32000/${rock_name}-dev:${version}; do
+    ((retry_count++))
+    if [ $retry_count -ge $max_retries ]; then
+        echo "Command failed after $max_retries attempts."
+        exit 1
+    fi
+    echo "Command failed. Retrying... ($retry_count/$max_retries)"
+    sleep 1  # Optional: wait for 1 second before retrying
+  done
