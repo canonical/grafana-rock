@@ -45,7 +45,7 @@ parts:
       - NODE_OPTIONS: "--max-old-space-size=8192"
     override-build: |
       # We have to limit node's max memory usage otherwise we'll run
-      # into OOM issues even with a 10GB RAM VM.
+      # into OOM issues even with a 10GB RAM VM. 
       npm install --location=global --prefix $CRAFT_PART_BUILD yarn
       [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
       [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
