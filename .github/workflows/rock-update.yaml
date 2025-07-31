@@ -3,11 +3,11 @@ name: Update rock
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
   build:
-    uses: canonical/observability/.github/workflows/rock-update.yaml@v0
+    uses: canonical/observability/.github/workflows/rock-update.yaml@v1
     with:
       rock-name: grafana
       source-repo: grafana/grafana
