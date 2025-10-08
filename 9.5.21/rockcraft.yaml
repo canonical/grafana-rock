@@ -14,16 +14,19 @@ platforms:
 parts:
   grafana:
     plugin: go
+    source-type: git
     source: https://github.com/grafana/grafana.git
-    # source-tag: v9.5.21
     # Version 9.5.21 was tagged on Jul 25, 2024:
     # https://github.com/grafana/grafana/releases/tag/v9.5.21
     # But a CVE fix was merged on Aug 14 2024:
     # https://github.com/grafana/grafana/pull/91927
-    source-commit: 8469ec46776ea6ea5db3e67e970d6735733f78e9
+    # source-tag: v9.5.21
+    # source-commit: 8469ec46776ea6ea5db3e67e970d6735733f78e9
+    source-branch: "v9.5.x"
     source-depth: 1
     build-snaps:
-      - go/1.21/stable
+      # go version is higher than in upstream's go.mod to address CVEs
+      - go/1.24/stable
     override-build: |
       set -x
       make build-go
@@ -41,12 +44,14 @@ parts:
     plugin: nil
     source-type: git
     source: https://github.com/grafana/grafana.git
-    # source-tag: v9.5.21
     # Version 9.5.21 was tagged on Jul 25, 2024:
     # https://github.com/grafana/grafana/releases/tag/v9.5.21
     # But a CVE fix was merged on Aug 14 2024:
     # https://github.com/grafana/grafana/pull/91927
-    source-commit: 8469ec46776ea6ea5db3e67e970d6735733f78e9
+    # source-tag: v9.5.21
+    # source-commit: 8469ec46776ea6ea5db3e67e970d6735733f78e9
+    source-branch: "v9.5.x"
+    source-depth: 1
     build-snaps:
       - node/18/stable
     build-environment:
