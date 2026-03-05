@@ -40,7 +40,7 @@ parts:
     source: https://github.com/grafana/grafana.git
     source-tag: v12.4.0
     build-snaps:
-      - node/22/stable
+      - node/18/stable
     build-environment:
       - NODE_OPTIONS: "--max-old-space-size=8192"
     override-build: "# We have to limit node's max memory usage otherwise we'll run\n# into OOM issues even with a 10GB RAM VM. \nnpm install --location=global --prefix $CRAFT_PART_BUILD yarn\n[[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}\n[[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}\nyarn config\nYARN_ENABLE_PROGRESS_BARS=false yarn install --immutable\necho \"Building frontend\"\nmake build-js\nmkdir -p ${CRAFT_PART_INSTALL}/{public,tools}\ncp -rpv public/* ${CRAFT_PART_INSTALL}/public/\n"
