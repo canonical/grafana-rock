@@ -42,10 +42,8 @@ parts:
     build-snaps:
       - node/18/stable
     build-environment:
-      - NODE_OPTIONS: "--max-old-space-size=8192"
+      - NODE_OPTIONS: "--max-old-space-size=8192" # We have to limit node's max memory usage otherwise we'll run into OOM issues even with a 10GB RAM VM. 
     override-build: |
-      # We have to limit node's max memory usage otherwise we'll run
-      # into OOM issues even with a 10GB RAM VM. 
       npm install --location=global --prefix $CRAFT_PART_BUILD yarn
       [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
       [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
