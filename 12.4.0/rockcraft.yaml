@@ -40,7 +40,7 @@ parts:
     source: https://github.com/grafana/grafana.git
     source-tag: v12.4.0
     build-snaps:
-      - node/18/stable
+      - node/22/stable
     build-environment:
       - NODE_OPTIONS: "--max-old-space-size=8192" # We have to limit node's max memory usage otherwise we'll run into OOM issues even with a 10GB RAM VM. 
     override-build: |
