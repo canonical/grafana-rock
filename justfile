@@ -1,33 +1,27 @@
-set quiet # Recipes are silent by default
-set export # Just variables are exported to environment variables
-
-rock_name := `echo ${PWD##*/} | sed 's/-rock//'`
-latest_version := `find . -maxdepth 1 -type d | sort -V | tail -n1 | sed 's@./@@'`
+set allow-duplicate-recipes
+set allow-duplicate-variables
+import? 'rocks.just'
 
 [private]
-default:
+@default:
   just --list
+  echo ""
+  echo "For help with a specific recipe, run: just --usage <recipe>"
 
-# Push an OCI image to a local registry
-[private]
-push-to-registry version:
-  echo "Pushing $rock_name $version to local registry"
-  rockcraft.skopeo --insecure-policy copy --dest-tls-verify=false \
-    "oci-archive:${version}/${rock_name}_${version}_amd64.rock" \
-    "docker://localhost:32000/${rock_name}-dev:${version}"
 
-# Pack a rock of a specific version
-pack version:
-  cd "$version" && rockcraft pack
-
-# `rockcraft clean` for a specific version
-clean version:
-  cd "$version" && rockcraft clean
-
-# Run a rock and open a shell into it with `kgoss`
-run version=latest_version: (push-to-registry version)
-  kgoss edit -i localhost:32000/${rock_name}-dev:${version}
-
-# Test the rock with `kgoss`
-test version=latest_version: (push-to-registry version)
-  GOSS_OPTS="--retry-timeout 60s" kgoss run -i localhost:32000/${rock_name}-dev:${version}
+# Generate a rock for the latest version of the upstream project
+[arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
+[group("maintenance")]
+update source_repo:
+  #!/usr/bin/env bash
+  just --justfile rocks.just update {{source_repo}}
+  # Additional update steps (Grafana UI)
+  latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
+  # Explicitly filter out prefixes for known rocks, so we can notice if a new rock has a different schema
+  version="${latest_release}"
+  version="${version#mimir-}"  # mimir
+  version="${version#cmd/builder/v}"  # opentelemetry-collector
+  version="${version#v}"  # Generic v- prefix
+  # Substitute the additional version reference
+  source_tag="$(yq .parts.grafana.source-tag "$version/rockcraft.yaml")"
+  tag="$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' "$version/rockcraft.yaml"
