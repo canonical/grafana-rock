@@ -43,8 +43,10 @@ parts:
       - node/22/stable
     build-environment:
     - NODE_OPTIONS: "--max-old-space-size=8192"
-    - YARN_ENABLE_GLOBAL_CACHE: "false"   # ← added
+    - YARN_ENABLE_GLOBAL_CACHE: "false"
     override-build: |
+      export TMPDIR="${CRAFT_PART_BUILD}/tmp"
+      mkdir -p "$TMPDIR"
       npm install --location=global --prefix $CRAFT_PART_BUILD yarn
       [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
       [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
