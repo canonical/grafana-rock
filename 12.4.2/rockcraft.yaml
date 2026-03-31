@@ -20,7 +20,7 @@ parts:
     source-tag: v12.4.2
     source-depth: 1
     build-snaps:
-      - go/1.25/stable
+      - go/1.24/stable
     override-build: |
       set -x
       make build-go
@@ -42,20 +42,28 @@ parts:
     build-snaps:
       - node/22/stable
     build-environment:
-    - NODE_OPTIONS: "--max-old-space-size=8192"
-    - YARN_ENABLE_GLOBAL_CACHE: "false"
+      - NODE_OPTIONS: "--max-old-space-size=4096"
     override-build: |
-      export TMPDIR="${CRAFT_PART_BUILD}/tmp"
-      mkdir -p "$TMPDIR"
       npm install --location=global --prefix $CRAFT_PART_BUILD yarn
       [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
       [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
       yarn config
-      YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+      # Yarn 4 has a bug packing git-protocol dependencies (tries to rename a
+      # dir into itself -> EINVAL). Replace the git ref with a tarball URL.
+      COMMIT="a10c748f40edc538425b458af4e471a8262ec4ed"
+      TARBALL_URL="https://github.com/grafana/react-data-grid/archive/${COMMIT}.tar.gz"
+      find . -name package.json -not -path '*/node_modules/*' \
+        -exec sed -i "s|grafana/react-data-grid#${COMMIT}|${TARBALL_URL}|g" {} +
+      YARN_ENABLE_PROGRESS_BARS=false YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
       echo "Building frontend"
+      export NX_DAEMON=false
+      export NX_PARALLEL=1
       make build-js
       mkdir -p ${CRAFT_PART_INSTALL}/{public,tools}
       cp -rpv public/* ${CRAFT_PART_INSTALL}/public/
+    stage:
+      - public/
+      - tools/
   ca-certs:
     plugin: nil
     overlay-packages:
