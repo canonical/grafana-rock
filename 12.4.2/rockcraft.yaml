@@ -56,6 +56,8 @@ parts:
         -exec sed -i "s|grafana/react-data-grid#${COMMIT}|${TARBALL_URL}|g" {} +
       YARN_ENABLE_PROGRESS_BARS=false YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
       echo "Building frontend"
+      # This is to avoid OOM issues
+      # Just run tasks sequentially
       export NX_DAEMON=false
       export NX_PARALLEL=1
       make build-js
