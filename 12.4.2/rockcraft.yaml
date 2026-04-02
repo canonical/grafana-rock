@@ -44,22 +44,23 @@ parts:
     build-environment:
       - NODE_OPTIONS: "--max-old-space-size=4096"
     override-build: |
-      npm install --location=global --prefix $CRAFT_PART_BUILD yarn
+      # REF: https://github.com/grafana/grafana/blob/v12.4.2/contribute/developer-guide.md
+      npm install -g corepack@latest
+      corepack enable
+      corepack install
       [[ -v http_proxy ]] && yarn config set httpProxy ${http_proxy}
       [[ -v https_proxy ]] && yarn config set httpsProxy ${https_proxy}
-      yarn config
-      # Yarn 4 has a bug packing git-protocol dependencies (tries to rename a
-      # dir into itself -> EINVAL). Replace the git ref with a tarball URL.
+      #yarn install --immutable
+
+      # Instead of the line above, we do the block below
+      # There is a known issue with Yarn 4.0.0-rc.1 where it gets an einval error when trying to fetch a pinned git commit: https://github.com/yarnpkg/berry/issues/3500
       COMMIT="a10c748f40edc538425b458af4e471a8262ec4ed"
       TARBALL_URL="https://github.com/grafana/react-data-grid/archive/${COMMIT}.tar.gz"
       find . -name package.json -not -path '*/node_modules/*' \
         -exec sed -i "s|grafana/react-data-grid#${COMMIT}|${TARBALL_URL}|g" {} +
-      YARN_ENABLE_PROGRESS_BARS=false YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
-      echo "Building frontend"
-      # This is to avoid OOM issues
-      # Just run tasks sequentially
-      export NX_DAEMON=false
-      export NX_PARALLEL=1
+      yarn install
+
+      # Normal flow
       make build-js
       mkdir -p ${CRAFT_PART_INSTALL}/{public,tools}
       cp -rpv public/* ${CRAFT_PART_INSTALL}/public/
