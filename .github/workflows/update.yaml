@@ -11,4 +11,4 @@ jobs:
     uses: canonical/observability/.github/workflows/rock-update.yaml@v2
     secrets: inherit
     with:
-      source-repo: prometheus/alertmanager
+      source-repo: grafana/grafana
