@@ -2,6 +2,8 @@ set allow-duplicate-recipes
 set allow-duplicate-variables
 import? 'rocks.just'
 
+lts_releases := '{"12.4": "2031-05-01"}'
+
 [private]
 @default:
   just --list
