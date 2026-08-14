@@ -2,7 +2,7 @@ set allow-duplicate-recipes
 set allow-duplicate-variables
 import? 'rocks.just'
 
-lts_releases := '{"12.4": "2031-05-01"}'
+source_repo := 'grafana/grafana'
 
 [private]
 @default:
@@ -11,19 +11,46 @@ lts_releases := '{"12.4": "2031-05-01"}'
   echo "For help with a specific recipe, run: just --usage <recipe>"
 
 
-# Generate a rock for the latest version of the upstream project
-[arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
+# Patch all existing major.minor folders, then sync the grafana-ui source-tag
 [group("maintenance")]
-update source_repo:
+update:
   #!/usr/bin/env bash
-  just --justfile rocks.just update {{source_repo}}
-  # Additional update steps (Grafana UI)
-  latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
-  # Explicitly filter out prefixes for known rocks, so we can notice if a new rock has a different schema
-  version="${latest_release}"
-  version="${version#mimir-}"  # mimir
-  version="${version#cmd/builder/v}"  # opentelemetry-collector
-  version="${version#v}"  # Generic v- prefix
-  # Substitute the additional version reference
-  source_tag="$(yq .parts.grafana.source-tag "$version/rockcraft.yaml")"
-  tag="$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' "$version/rockcraft.yaml"
+  set -e
+  [[ -z "{{source_repo}}" ]] && { echo "× Set 'source_repo' in the local justfile"; exit 1; }
+  for folder in $(find . -maxdepth 1 -type d -regextype posix-extended -regex '\./[0-9]+\.[0-9]+' -printf '%f\n' | sort -V); do
+    read -r version tag < <(just resolve-tag "$folder")
+    if [[ -z "$version" ]]; then echo "→ no upstream patch found for $folder, skipping"; continue; fi
+    current="$(yq -r '.version' "$folder/rockcraft.yaml")"
+    if [[ "$current" == "$version" ]]; then echo "→ $folder already at $version"; continue; fi
+    echo "Updating $folder: $current → $version (source-tag $tag)"
+    just write-version "$folder" "$version" "$tag"
+    just sync-extra "$folder"
+  done
+
+# Onboard a new major.minor line (mirrors the blueprint, plus the grafana-ui source-tag)
+[group("maintenance")]
+add-version version:
+  #!/usr/bin/env bash
+  set -e
+  [[ -z "{{source_repo}}" ]] && { echo "× Set 'source_repo' in the local justfile"; exit 1; }
+  requested="{{version}}"; requested="${requested#v}"
+  major_minor="$(echo "$requested" | grep -oP '^\d+\.\d+')"
+  [[ -z "$major_minor" ]] && { echo "× could not parse a major.minor from '{{version}}'"; exit 1; }
+  [[ -d "$major_minor" ]] && { echo "→ $major_minor/ already exists, nothing to do"; exit 0; }
+  read -r version tag < <(just resolve-tag "$major_minor")
+  [[ -z "$version" ]] && { echo "× no upstream release found for {{source_repo}} on the $major_minor line"; exit 1; }
+  template="{{latest_version}}"
+  [[ -z "$template" ]] && { echo "× no existing X.Y folder to copy from"; exit 1; }
+  echo "Seeding $major_minor/ from $template/ ..."
+  cp -r "$template" "$major_minor"
+  just write-version "$major_minor" "$version" "$tag"
+  just sync-extra "$major_minor"
+  echo "✓ Created $major_minor/ at $version (source-tag $tag)"
+
+# Keep the grafana-ui part's source-tag in sync with the grafana part for a single folder
+[private]
+sync-extra folder:
+  #!/usr/bin/env bash
+  set -e
+  source_tag="$(yq -r '.parts.grafana.source-tag' "{{folder}}/rockcraft.yaml")"
+  tag="$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' "{{folder}}/rockcraft.yaml"
