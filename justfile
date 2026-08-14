@@ -2,7 +2,7 @@ set allow-duplicate-recipes
 set allow-duplicate-variables
 import? 'rocks.just'
 
-lts_releases := '{"12.4": "2031-05-01"}'
+source_repo := 'grafana/grafana'
 
 [private]
 @default:
@@ -11,19 +11,14 @@ lts_releases := '{"12.4": "2031-05-01"}'
   echo "For help with a specific recipe, run: just --usage <recipe>"
 
 
-# Generate a rock for the latest version of the upstream project
-[arg("source_repo", help="Repository of the upstream project in 'org/repo' form")]
+# Patch all existing major.minor folders, then sync the grafana-ui source-tag
 [group("maintenance")]
-update source_repo:
+update:
   #!/usr/bin/env bash
-  just --justfile rocks.just update {{source_repo}}
-  # Additional update steps (Grafana UI)
-  latest_release="$(gh release list --repo {{source_repo}} --exclude-pre-releases --limit=1 --json tagName --jq '.[0].tagName')"
-  # Explicitly filter out prefixes for known rocks, so we can notice if a new rock has a different schema
-  version="${latest_release}"
-  version="${version#mimir-}"  # mimir
-  version="${version#cmd/builder/v}"  # opentelemetry-collector
-  version="${version#v}"  # Generic v- prefix
-  # Substitute the additional version reference
-  source_tag="$(yq .parts.grafana.source-tag "$version/rockcraft.yaml")"
-  tag="$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' "$version/rockcraft.yaml"
+  set -e
+  just --justfile rocks.just update
+  # Keep the grafana-ui part's source-tag in sync with the grafana part
+  for folder in $(find . -maxdepth 1 -type d -regextype posix-extended -regex '\./[0-9]+\.[0-9]+' -printf '%f\n'); do
+    source_tag="$(yq -r '.parts.grafana.source-tag' "$folder/rockcraft.yaml")"
+    tag="$source_tag" yq -i '.parts.grafana-ui.source-tag = strenv(tag)' "$folder/rockcraft.yaml"
+  done
