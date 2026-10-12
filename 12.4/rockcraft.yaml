@@ -3,7 +3,7 @@ summary: Grafana in a ROCK.
 description: >
   The open and composable observability and data visualization platform. Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more.
 
-version: "12.4.11"
+version: "12.4.12"
 base: ubuntu@26.04
 license: AGPL-3.0
 services:
@@ -17,7 +17,7 @@ parts:
   grafana:
     plugin: go
     source: https://github.com/grafana/grafana.git
-    source-tag: v12.4.11
+    source-tag: v12.4.12
     source-depth: 1
     build-snaps:
       - go/1.26/candidate
@@ -38,7 +38,7 @@ parts:
     plugin: nil
     source-type: git
     source: https://github.com/grafana/grafana.git
-    source-tag: v12.4.11
+    source-tag: v12.4.12
     build-snaps:
       - node/22/stable
     build-environment:
